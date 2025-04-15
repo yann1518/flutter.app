@@ -4,6 +4,7 @@ import 'dart:convert';
 
 import 'postCard.dart';
 import 'post.dart';
+import 'postDetailScreen.dart';
 
 class HomePage extends StatefulWidget {
   final String token;
@@ -40,28 +41,25 @@ class _HomePageState extends State<HomePage> {
       print("Response Body: ${response.body}");
 
       if (response.statusCode == 200) {
-        print("Requête réussie !");
-        final List<dynamic> data = json.decode(response.body);
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+        final List<dynamic> postList = jsonResponse['member'];
+
         setState(() {
-          posts = data.map((post) => Post.fromJson(post)).toList();
+          posts = postList.map((post) => Post.fromJson(post)).toList();
           isLoading = false;
         });
       } else {
-        print("Erreur ${response.statusCode}: ${response.body}");
-        setState(() {
-          isLoading = false;
-        });
+        setState(() => isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content:
-                  Text('Erreur ${response.statusCode} : ${response.body}')),
+            content: Text(
+              'Erreur ${response.statusCode} : ${response.reasonPhrase}',
+            ),
+          ),
         );
       }
     } catch (e) {
-      print("Erreur lors de la requête : $e");
-      setState(() {
-        isLoading = false;
-      });
+      setState(() => isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Erreur réseau')),
       );
@@ -86,6 +84,14 @@ class _HomePageState extends State<HomePage> {
                       imageUrl: post.imageFilename,
                       category: post.category,
                       createdAt: post.createdAt,
+                      onViewMore: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PostDetailScreen(post: post),
+                          ),
+                        );
+                      },
                     );
                   },
                 ),

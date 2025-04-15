@@ -6,6 +6,7 @@ class PostCard extends StatelessWidget {
   final String imageUrl;
   final String category;
   final DateTime createdAt;
+  final VoidCallback onViewMore;
 
   const PostCard({
     super.key,
@@ -14,27 +15,48 @@ class PostCard extends StatelessWidget {
     required this.imageUrl,
     required this.category,
     required this.createdAt,
+    required this.onViewMore,
   });
 
   @override
   Widget build(BuildContext context) {
+    final fullImageUrl = imageUrl.startsWith('http')
+        ? imageUrl
+        : 'https://std29.beaupeyrat.com/uploads/imagesclient/$imageUrl';
+
+    print("Image URL complète : $fullImageUrl");
+
     return Card(
       elevation: 4,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (imageUrl.isNotEmpty)
-            Image.network(
-              imageUrl,
-              height: 200,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => const SizedBox(
-                height: 200,
-                child: Center(child: Icon(Icons.error)),
-              ),
-            ),
+          imageUrl.isNotEmpty
+              ? Image.network(
+                  fullImageUrl,
+                  height: 200,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return const SizedBox(
+                      height: 200,
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    print('Erreur chargement image : $error');
+                    return const SizedBox(
+                      height: 200,
+                      child: Center(child: Icon(Icons.broken_image)),
+                    );
+                  },
+                )
+              : const SizedBox(
+                  height: 200,
+                  child: Center(child: Text('Pas d’image')),
+                ),
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -89,9 +111,7 @@ class PostCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 ElevatedButton.icon(
-                  onPressed: () {
-                    // Action pour voir plus de détails
-                  },
+                  onPressed: onViewMore, // appel du callback ici
                   icon: const Icon(Icons.visibility),
                   label: const Text('Voir plus'),
                   style: ElevatedButton.styleFrom(
@@ -99,7 +119,6 @@ class PostCard extends StatelessWidget {
                     foregroundColor: Colors.white,
                   ),
                 ),
-                const Icon(Icons.favorite_border),
               ],
             ),
           ),
