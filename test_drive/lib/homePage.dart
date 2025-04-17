@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
 import 'postCard.dart';
 import 'post.dart';
 import 'postDetailScreen.dart';
@@ -80,7 +79,6 @@ class _HomePageState extends State<HomePage> {
                     final post = posts[index];
                     return PostCard(
                       title: post.title,
-                      description: post.content,
                       imageUrl: post.imageFilename,
                       category: post.category,
                       createdAt: post.createdAt,

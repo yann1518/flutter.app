@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 class PostCard extends StatelessWidget {
   final String title;
-  final String description;
   final String imageUrl;
   final String category;
   final DateTime createdAt;
@@ -11,7 +10,6 @@ class PostCard extends StatelessWidget {
   const PostCard({
     super.key,
     required this.title,
-    required this.description,
     required this.imageUrl,
     required this.category,
     required this.createdAt,
@@ -23,8 +21,6 @@ class PostCard extends StatelessWidget {
     final fullImageUrl = imageUrl.startsWith('http')
         ? imageUrl
         : 'https://std29.beaupeyrat.com/uploads/imagesclient/$imageUrl';
-
-    print("Image URL complète : $fullImageUrl");
 
     return Card(
       elevation: 4,
@@ -46,7 +42,6 @@ class PostCard extends StatelessWidget {
                     );
                   },
                   errorBuilder: (context, error, stackTrace) {
-                    print('Erreur chargement image : $error');
                     return const SizedBox(
                       height: 200,
                       child: Center(child: Icon(Icons.broken_image)),
@@ -68,11 +63,6 @@ class PostCard extends StatelessWidget {
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  description,
-                  style: const TextStyle(fontSize: 16),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -111,7 +101,7 @@ class PostCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 ElevatedButton.icon(
-                  onPressed: onViewMore, // appel du callback ici
+                  onPressed: onViewMore,
                   icon: const Icon(Icons.visibility),
                   label: const Text('Voir plus'),
                   style: ElevatedButton.styleFrom(
@@ -119,6 +109,7 @@ class PostCard extends StatelessWidget {
                     foregroundColor: Colors.white,
                   ),
                 ),
+                const Icon(Icons.favorite_border),
               ],
             ),
           ),
