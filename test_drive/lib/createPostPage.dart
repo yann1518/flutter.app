@@ -18,6 +18,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
   String content = '';
   String category = '';
   String imageFilename = '';
+  String slug = '';
   bool isLoading = false;
   File? _selectedImage;
   final ImagePicker _picker = ImagePicker();
@@ -40,6 +41,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
       Uri.parse(uploadUrl),
     );
     request.files.add(await http.MultipartFile.fromPath('file', image.path));
+    request.headers['Authorization'] = 'Bearer ${widget.token}';
     var response = await request.send();
     if (response.statusCode == 200) {
       var respStr = await response.stream.bytesToString();
@@ -60,6 +62,13 @@ class _CreatePostPageState extends State<CreatePostPage> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     _formKey.currentState!.save();
+    
+    // Générer le slug à partir du titre
+    slug = title.toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+        .replaceAll(RegExp(r'^-+'), '')
+        .replaceAll(RegExp(r'-+$'), '');
+    
     setState(() => isLoading = true);
     try {
       String? finalImageFilename = imageFilename;
@@ -84,6 +93,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
           'content': content,
           'category': category,
           'imageFilename': finalImageFilename,
+          'slug': slug,
         }),
       );
 
