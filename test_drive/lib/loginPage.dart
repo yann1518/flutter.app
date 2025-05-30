@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'homePage.dart';
+import 'profilePage.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -48,7 +49,10 @@ class _LoginPageState extends State<LoginPage> {
           // Redirection vers la page d'accueil
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => HomePage(token: token)),
+            MaterialPageRoute(
+              builder: (context) => HomePage(
+                token: token,
+              )),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(

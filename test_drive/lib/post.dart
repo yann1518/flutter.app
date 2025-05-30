@@ -22,15 +22,21 @@ class Post {
 
   // Constructeur pour générer une instance à partir d'un objet JSON
   factory Post.fromJson(Map<String, dynamic> json) {
+    String? createdAtStr = json['createdAt'];
+    String? updatedAtStr = json['updatedAt'];
     return Post(
-      id: json['id'],
-      title: json['title'],
-      content: json['content'],
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
-      category: json['category'],
-      imageFilename: json['imageFilename'],
-      slug: json['slug'],
+      id: json['id'] ?? 0,
+      title: json['title'] ?? '',
+      content: json['content'] ?? '',
+      createdAt: (createdAtStr != null && createdAtStr.isNotEmpty)
+          ? DateTime.tryParse(createdAtStr) ?? DateTime.now()
+          : DateTime.now(),
+      updatedAt: (updatedAtStr != null && updatedAtStr.isNotEmpty)
+          ? DateTime.tryParse(updatedAtStr) ?? DateTime.now()
+          : DateTime.now(),
+      category: json['category'] ?? '',
+      imageFilename: json['imageFilename'] ?? '',
+      slug: json['slug'] ?? '',
     );
   }
 }

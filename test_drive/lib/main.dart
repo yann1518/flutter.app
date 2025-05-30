@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'loginPage.dart';
 import 'homePage.dart';
-import 'createPostPage.dart';
+import 'profilePage.dart';
 
 void main() {
   runApp(const MyApp());
@@ -16,24 +17,33 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: '/',
       routes: {
-        '/': (context) => const LoginPage(),
+        '/': (context) => LoginPage(),
         '/home': (context) => _buildHomePage(context),
-        '/createPost': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+        '/profile': (context) {
+          final modalRoute = ModalRoute.of(context);
+          Map<String, dynamic>? args;
+          if (modalRoute != null && modalRoute.settings.arguments != null) {
+            args = modalRoute.settings.arguments as Map<String, dynamic>?;
+          }
           final token = args != null && args.containsKey('token') ? args['token'] : '';
-          return CreatePostPage(token: token);
+          final userId = args != null && args.containsKey('userId') ? args['userId'] : 0;
+          final username = args != null && args.containsKey('username') ? args['username'] : '';
+          return ProfilePage(token: token, userId: userId, username: username);
         },
       },
     );
   }
 
-  Widget _buildHomePage(BuildContext context) {
-    final args =
-        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+  Widget _buildHomePage(BuildContext context) { 
+    final modalRoute = ModalRoute.of(context);
+    Map<String, dynamic>? args;
+    if (modalRoute != null && modalRoute.settings.arguments != null) {
+      args = modalRoute.settings.arguments as Map<String, dynamic>?;
+    }
     if (args != null && args.containsKey('token')) {
       return HomePage(token: args['token']);
     } else {
-      return const LoginPage();
+      return LoginPage();
     }
   }
 }
