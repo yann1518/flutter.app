@@ -1,19 +1,80 @@
 import 'package:flutter/material.dart';
 import 'post.dart';
+import 'comment.dart';
+import 'api_service.dart';
 
-class PostDetailScreen extends StatelessWidget {
+class PostDetailScreen extends StatefulWidget {
   final Post post;
+  final String token;
+  final String postAuthor;
+  final int postAuthorId;
 
-  const PostDetailScreen({required this.post});
+  const PostDetailScreen({required this.post, required this.token, required this.postAuthor, required this.postAuthorId});
+
+  @override
+  State<PostDetailScreen> createState() => _PostDetailScreenState();
+}
+
+class _PostDetailScreenState extends State<PostDetailScreen> {
+  late ApiService apiService;
+  List<Comment> comments = [];
+  bool isLoadingComments = true;
+  final TextEditingController _controller = TextEditingController();
+  bool isPosting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Remplace par l'URL de base de ton API et le token utilisateur
+    apiService = ApiService(baseUrl: 'https://std29.beaupeyrat.com', token: widget.token);
+    fetchComments();
+  }
+
+  Future<void> fetchComments() async {
+    setState(() {
+      isLoadingComments = true;
+    });
+    try {
+      // Toujours charger les commentaires depuis l'API pour avoir la liste à jour
+      comments = await apiService.fetchComments(widget.post.id);
+    } catch (e) {
+      comments = [];
+    }
+    setState(() {
+      isLoadingComments = false;
+    });
+  }
+
+  Future<void> postComment() async {
+    if (_controller.text.trim().isEmpty) return;
+    setState(() {
+      isPosting = true;
+    });
+    try {
+      // Remplace 'Auteur' par le vrai nom de l'utilisateur si tu l'as
+      final newComment = await apiService.postComment(widget.post.id, _controller.text, 'Auteur');
+      setState(() {
+        comments.insert(0, newComment);
+        _controller.clear();
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de l\'envoi du commentaire')),
+      );
+    }
+    setState(() {
+      isPosting = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     try {
-      String formattedDate = _formatDate(post.createdAt);
+      String formattedDate = _formatDate(widget.post.createdAt);
 
       return Scaffold(
         appBar: AppBar(
-          title: Text(post.title, style: const TextStyle(color: Colors.white)),
+          title: Text(widget.post.title, style: const TextStyle(color: Colors.white)),
           backgroundColor: Colors.deepPurple,
           elevation: 2,
           iconTheme: const IconThemeData(color: Colors.white),
@@ -34,11 +95,11 @@ class PostDetailScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      post.imageFilename.isNotEmpty
+                      widget.post.imageFilename.isNotEmpty
                           ? ClipRRect(
                               borderRadius: BorderRadius.circular(12),
                               child: Image.network(
-                                'https://std29.beaupeyrat.com/uploads/imagesclient/${post.imageFilename}',
+                                'https://std29.beaupeyrat.com/uploads/imagesclient/${widget.post.imageFilename}',
                                 fit: BoxFit.cover,
                                 height: 220,
                                 width: double.infinity,
@@ -54,7 +115,7 @@ class PostDetailScreen extends StatelessWidget {
                             ),
                       const SizedBox(height: 22),
                       Text(
-                        post.title,
+                        widget.post.title,
                         style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.deepPurple),
                         textAlign: TextAlign.center,
                       ),
@@ -65,7 +126,7 @@ class PostDetailScreen extends StatelessWidget {
                           Icon(Icons.category, size: 18, color: Colors.deepPurple[200]),
                           const SizedBox(width: 6),
                           Text(
-                            post.category,
+                            widget.post.category,
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.deepPurple[300], fontWeight: FontWeight.w600),
                           ),
                         ],
@@ -86,10 +147,73 @@ class PostDetailScreen extends StatelessWidget {
                       Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          post.content,
+                          widget.post.content,
                           style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 18, color: Colors.black87),
                           textAlign: TextAlign.left,
                         ),
+                      ),
+                      const SizedBox(height: 32),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Commentaires',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.deepPurple),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      isLoadingComments
+                          ? const Center(child: CircularProgressIndicator())
+                          : comments.isEmpty
+                              ? const Text('Aucun commentaire pour ce post.')
+                              : ListView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemCount: comments.length,
+                                  itemBuilder: (context, index) {
+                                    final comment = comments[index];
+                                    return Card(
+                                      margin: const EdgeInsets.symmetric(vertical: 6),
+                                      child: ListTile(
+                                        leading: const Icon(Icons.comment, color: Colors.deepPurple),
+                                        title: Text(
+  comment.author == widget.postAuthor ? 'Auteur' : 'Anonyme',
+  style: const TextStyle(fontWeight: FontWeight.bold),
+),
+
+                                        subtitle: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(comment.content),
+                                            const SizedBox(height: 4),
+                                            Text(_formatDate(comment.createdAt), style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _controller,
+                              decoration: const InputDecoration(
+                                labelText: 'Ajouter un commentaire...',
+                                border: OutlineInputBorder(),
+                              ),
+                              minLines: 1,
+                              maxLines: 3,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          isPosting
+                              ? const CircularProgressIndicator()
+                              : IconButton(
+                                  icon: const Icon(Icons.send, color: Colors.deepPurple),
+                                  onPressed: postComment,
+                                ),
+                        ],
                       ),
                     ],
                   ),

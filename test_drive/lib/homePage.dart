@@ -189,7 +189,7 @@ class _HomePageState extends State<HomePage> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => PostDetailScreen(post: post),
+                                builder: (context) => PostDetailScreen(post: post, token: widget.token, postAuthor: post.author, postAuthorId: post.userId),
                               ),
                             );
                           },
