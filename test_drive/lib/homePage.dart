@@ -186,10 +186,40 @@ class _HomePageState extends State<HomePage> {
                             ),
                           ),
                           onPressed: () {
+                            // Extraction du userId, des rôles et du username depuis le token JWT
+                            int currentUserId = 0;
+                            List<String> roles = ['ROLE_USER'];
+                            String username = '';
+                            try {
+                              final parts = widget.token.split('.');
+                              if (parts.length == 3) {
+                                final payload = parts[1];
+                                final normalized = base64.normalize(payload);
+                                final decoded = utf8.decode(base64.decode(normalized));
+                                final payloadData = json.decode(decoded);
+                                currentUserId = int.tryParse(payloadData['sub'].toString()) ?? 0;
+                                if (payloadData['roles'] != null && payloadData['roles'] is List) {
+                                  roles = List<String>.from(payloadData['roles']);
+                                }
+                                if (payloadData['username'] != null) {
+                                  username = payloadData['username'];
+                                } else if (payloadData['email'] != null) {
+                                  username = payloadData['email'];
+                                }
+                              }
+                            } catch (_) {}
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => PostDetailScreen(post: post, token: widget.token, postAuthor: post.author, postAuthorId: post.userId),
+                                builder: (context) => PostDetailScreen(
+                                  post: post,
+                                  token: widget.token,
+                                  postAuthor: post.author,
+                                  postAuthorId: post.userId,
+                                  currentUserId: currentUserId,
+                                  roles: roles,
+                                  username: username,
+                                ),
                               ),
                             );
                           },

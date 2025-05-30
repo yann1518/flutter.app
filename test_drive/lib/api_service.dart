@@ -59,4 +59,17 @@ class ApiService {
       throw Exception('Erreur lors de l\'envoi du commentaire');
     }
   }
+   Future<void> deleteComment(int commentId) async {
+    final url = Uri.parse('$baseUrl/api/comments/$commentId');
+    final response = await http.delete(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/ld+json',
+      },
+    );
+    if (response.statusCode != 204) {
+      throw Exception('Erreur lors de la suppression du commentaire');
+    }
+  }
 }

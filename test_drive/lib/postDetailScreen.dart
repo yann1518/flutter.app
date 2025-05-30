@@ -8,8 +8,11 @@ class PostDetailScreen extends StatefulWidget {
   final String token;
   final String postAuthor;
   final int postAuthorId;
+  final int currentUserId;
+  final List<String> roles;
+  final String username;
 
-  const PostDetailScreen({required this.post, required this.token, required this.postAuthor, required this.postAuthorId});
+  const PostDetailScreen({required this.post, required this.token, required this.postAuthor, required this.postAuthorId, required this.currentUserId, required this.roles, required this.username});
 
   @override
   State<PostDetailScreen> createState() => _PostDetailScreenState();
@@ -52,7 +55,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     });
     try {
       // Remplace 'Auteur' par le vrai nom de l'utilisateur si tu l'as
-      final newComment = await apiService.postComment(widget.post.id, _controller.text, 'Auteur');
+      final newComment = await apiService.postComment(widget.post.id, _controller.text, widget.username);
       setState(() {
         comments.insert(0, newComment);
         _controller.clear();
@@ -175,19 +178,83 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                       margin: const EdgeInsets.symmetric(vertical: 6),
                                       child: ListTile(
                                         leading: const Icon(Icons.comment, color: Colors.deepPurple),
-                                        title: Text(
-  comment.author == widget.postAuthor ? 'Auteur' : 'Anonyme',
-  style: const TextStyle(fontWeight: FontWeight.bold),
-),
-
+                                        title: Row(
+                                          children: [
+                                            Flexible(
+                                              child: Text(
+                                                comment.author +
+                                                    (comment.author == widget.postAuthor ? ' (Auteur du post)' : '') +
+                                                    (comment.author == widget.username ? ' (Moi)' : ''),
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: comment.author == widget.postAuthor
+                                                      ? Colors.deepPurple
+                                                      : (comment.author == widget.username ? Colors.green : Colors.black),
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                         subtitle: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(comment.content),
+                                            Row(
+                                              children: [
+                                                const Icon(Icons.email, size: 14, color: Colors.blueGrey),
+                                                const SizedBox(width: 4),
+                                                Flexible(
+                                                  child: Text(
+                                                    comment.author,
+                                                    style: TextStyle(
+                                                      color: comment.author == widget.postAuthor
+                                                          ? Colors.deepPurple
+                                                          : (comment.author == widget.roles.join(',') ? Colors.green : Colors.blueGrey),
+                                                      fontSize: 12,
+                                                      fontStyle: comment.author == widget.roles.join(',') ? FontStyle.italic : FontStyle.normal,
+                                                    ),
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                                if (comment.author == widget.roles.join(','))
+                                                  const Padding(
+                                                    padding: EdgeInsets.only(left: 4),
+                                                    child: Text('(Moi)', style: TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold)),
+                                                  ),
+                                              ],
+                                            ),
                                             const SizedBox(height: 4),
                                             Text(_formatDate(comment.createdAt), style: const TextStyle(color: Colors.grey, fontSize: 12)),
                                           ],
                                         ),
+                                        trailing: (widget.roles.contains('ROLE_ADMIN') || comment.author == widget.username)
+                                            ? IconButton(
+                                                icon: Icon(Icons.delete, color: Colors.red),
+                                                onPressed: () async {
+                                                  // Si utilisateur lambda, il ne peut supprimer que ses propres commentaires
+                                                  if (!widget.roles.contains('ROLE_ADMIN') && comment.author != widget.username) {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(content: Text('Vous ne pouvez supprimer que vos propres commentaires.')),
+                                                    );
+                                                    return;
+                                                  }
+                                                  try {
+                                                    await apiService.deleteComment(comment.id);
+                                                    setState(() {
+                                                      comments.removeAt(index);
+                                                    });
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(content: Text('Commentaire supprimé')),
+                                                    );
+                                                  } catch (e) {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(content: Text('Erreur lors de la suppression')),
+                                                    );
+                                                  }
+                                                },
+                                              )
+                                            : null,
                                       ),
                                     );
                                   },
