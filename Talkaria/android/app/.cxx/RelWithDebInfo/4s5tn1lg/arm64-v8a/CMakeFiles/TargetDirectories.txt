@@ -1,0 +1,2 @@
+C:/Users/Yann/Music/flutter.app/Talkaria/android/app/.cxx/RelWithDebInfo/4s5tn1lg/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/Users/Yann/Music/flutter.app/Talkaria/android/app/.cxx/RelWithDebInfo/4s5tn1lg/arm64-v8a/CMakeFiles/rebuild_cache.dir
