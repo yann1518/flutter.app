@@ -25,12 +25,44 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   final TextEditingController _controller = TextEditingController();
   bool isPosting = false;
 
+  bool isLiked = false;
+  int likes = 0;
+  bool loadingLike = false;
+
   @override
   void initState() {
     super.initState();
-    // Remplace par l'URL de base de ton API et le token utilisateur
     apiService = ApiService(baseUrl: 'https://std29.beaupeyrat.com', token: widget.token);
     fetchComments();
+    _fetchLikes();
+  }
+
+  Future<void> _fetchLikes() async {
+    try {
+      final result = await apiService.fetchLikes(widget.post.id);
+      print('Résultat fetchLikes: $result');
+      setState(() {
+        likes = result['likes'] ?? 0;
+        isLiked = result['isLiked'] ?? false;
+      });
+    } catch (e) {
+      print('Erreur fetchLikes: $e');
+    }
+  }
+
+  Future<void> _toggleLike() async {
+    if (loadingLike) return;
+    setState(() { loadingLike = true; });
+    try {
+      final result = await apiService.toggleLike(widget.post.id);
+      setState(() {
+        likes = result['likes'] ?? likes;
+        isLiked = result['isLiked'] ?? isLiked;
+      });
+    } catch (e) {
+      // ignore erreur
+    }
+    setState(() { loadingLike = false; });
   }
 
   Future<void> fetchComments() async {
@@ -116,6 +148,26 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                               ),
                               child: const Center(child: Text('Pas d’image', style: TextStyle(color: Colors.deepPurple))),
                             ),
+                      const SizedBox(height: 18),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              isLiked ? Icons.favorite : Icons.favorite_border,
+                              color: isLiked ? Colors.red : Colors.grey,
+                            ),
+                            tooltip: isLiked ? 'Retirer le like' : 'Liker',
+                            onPressed: loadingLike ? null : () async {
+                              await _toggleLike();
+                              await _fetchLikes(); // Pour garantir la synchro instantanée
+                            },
+                          ),
+                          Text('$likes', style: const TextStyle(fontSize: 18, color: Colors.deepPurple)),
+                          const SizedBox(width: 6),
+                          Text(isLiked ? 'Vous aimez' : '', style: TextStyle(fontSize: 14, color: Colors.red[300])),
+                        ],
+                      ),
                       const SizedBox(height: 22),
                       Text(
                         widget.post.title,

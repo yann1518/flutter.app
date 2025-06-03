@@ -32,9 +32,8 @@ class ApiService {
 
   /// Récupère le nombre de likes et l'état like pour un post (même endpoint, sans modifier l'UI)
   Future<Map<String, dynamic>> fetchLikes(int postId) async {
-    // On appelle le même endpoint, mais côté Flutter on ne modifie pas l'UI
     final url = Uri.parse('$baseUrl/post/$postId/like');
-    final response = await http.post(
+    final response = await http.get(
       url,
       headers: {
         'Authorization': 'Bearer $token',
